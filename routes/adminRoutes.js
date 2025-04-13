@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/users', async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: { exclude: ['password'] } // hide passwords
+      attributes: { exclude: ['password'] }, // Exclude password from the response
     });
     res.json(users);
   } catch (error) {

@@ -1,6 +1,8 @@
 import express from 'express';
 import sequelize from './config/database.js';
-import adminRoutes from './routes/adminRoutes.js'; // 👈 Import admin routes
+import adminRoutes from './routes/adminRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -15,6 +17,9 @@ app.use(express.json());
 
 // Use admin routes 
 app.use('/api/admin', adminRoutes);
+
+// Use auth routes
+app.use('/api', authRoutes);
 
 // Landing route
 app.get('/', (req, res) => {
