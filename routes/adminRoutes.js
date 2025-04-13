@@ -49,8 +49,7 @@ router.delete('/users/:id', verifyAdmin, async (req, res) => {
   
 
 
-
-  // ✅ UPDATE a user by ID
+  // UPDATE a user by ID
 router.put('/users/:id', verifyAdmin, async (req, res) => {
   const { first_name, last_name, date_of_birth, role } = req.body;
 
