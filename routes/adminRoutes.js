@@ -1,10 +1,11 @@
 import express from 'express';
 import User from '../models/User.js';
+import { verifyAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// GET /api/admin/users - Get all users
-router.get('/users', async (req, res) => {
+// GET /api/admin/users - Get all users (protected through middleware)
+router.get('/users',verifyAdmin, async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: { exclude: ['password'] }, // Exclude password from the response
