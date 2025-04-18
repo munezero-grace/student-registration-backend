@@ -59,7 +59,7 @@ The application uses Sequelize ORM with PostgreSQL. It will automatically create
 ### Authentication
 
 - **POST /api/register** - Register a new student
-  - Required fields: `first_name`, `last_name`, `email`, `password`, `date_of_birth`
+  - Required fields: `firstName`, `lastName`, `email`, `password`, `dateOfBirth`
   - Age must be between 10-20 years
   - Returns user data with a unique registration number
 
@@ -83,7 +83,7 @@ The application uses Sequelize ORM with PostgreSQL. It will automatically create
 
 - **PUT /api/admin/users/:id** - Update a user's information
   - Admin access only
-  - Can update: `first_name`, `last_name`, `date_of_birth`, `role`
+  - Can update: `firstName`, `lastName`, `dateOfBirth`, `role`
 
 - **DELETE /api/admin/users/:id** - Delete a user
   - Admin access only

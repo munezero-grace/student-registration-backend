@@ -22,11 +22,11 @@ export const getProfile = async (req, res) => {
       success: true,
       data: {
         id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        registration_number: user.registration_number,
-        date_of_birth: user.date_of_birth,
+        registrationNumber: user.registrationNumber,
+        dateOfBirth: user.dateOfBirth,
         role: user.role,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
