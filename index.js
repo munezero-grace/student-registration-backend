@@ -2,6 +2,7 @@ import express from 'express';
 import sequelize from './config/database.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import cors from 'cors';
 
 
@@ -37,6 +38,9 @@ app.use('/api/admin', adminRoutes);
 
 // Use auth routes
 app.use('/api', authRoutes);
+
+// Use user routes
+app.use('/api', userRoutes);
 
 // Landing route
 app.get('/', (req, res) => {
