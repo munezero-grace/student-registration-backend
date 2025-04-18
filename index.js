@@ -2,6 +2,7 @@ import express from 'express';
 import sequelize from './config/database.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import cors from 'cors';
 
 
 const app = express();
@@ -13,6 +14,22 @@ sequelize.sync({ alter: true })
   .catch((err) => console.error("❌ DB connection failed:", err));
 
 // Middleware
+const corsOpts = {
+  origin: '*',
+  methods: [
+      'GET',
+      'POST',
+      'DELETE',
+      'PATCH',
+      'PUT'
+  ],
+  allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+  ],
+};
+
+app.use(cors(corsOpts));
 app.use(express.json());
 
 // Use admin routes 
