@@ -58,9 +58,16 @@ router.post('/register', async (req, res) => {
     const { first_name, last_name, email, password, date_of_birth } = req.body;
   
     try {
-      // Check for existing user
+      // Validate email presence
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Check for existing user with the same email
       const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) return res.status(400).json({ message: "Email already registered" });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already registered. Please use a different email address." });
+      }
   
       // Age validation (10–20 years)
       const dob = new Date(date_of_birth);

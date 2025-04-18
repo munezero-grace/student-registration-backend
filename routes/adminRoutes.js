@@ -37,13 +37,24 @@ router.get('/users/:id', verifyAdmin, async (req, res) => {
   // DELETE a user by ID
 router.delete('/users/:id', verifyAdmin, async (req, res) => {
     try {
-      const user = await User.findByPk(req.params.id);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      // Validate user ID parameter
+      const userId = req.params.id;
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+
+      // Check if user exists before deletion
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found. Deletion failed.' });
+      }
   
+      // Proceed with deletion
       await user.destroy();
       res.json({ message: 'User deleted successfully' });
     } catch (error) {
-      res.status(500).json({ message: 'Error deleting user' });
+      console.error('❌ Error deleting user:', error);
+      res.status(500).json({ message: 'Server error while deleting user' });
     }
   });
   
