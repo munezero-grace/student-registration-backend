@@ -2,17 +2,16 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 const User = sequelize.define("User", {
-
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  first_name: {
+  firstName: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  last_name: {
+  lastName: {
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -25,23 +24,23 @@ const User = sequelize.define("User", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
-  registration_number: {
+  registrationNumber: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
-  date_of_birth: {
+  dateOfBirth: {
     type: DataTypes.DATE,
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM("student", "admin"),
-    defaultValue: "student",
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
 }, {
   tableName: "Users",
   timestamps: true,
-  underscored: true, 
+  underscored: false
 });
 
 export default User;
