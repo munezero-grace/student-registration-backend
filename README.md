@@ -38,14 +38,19 @@ cd student-registration-backend
 npm install
 ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Install Swagger dependencies
+```bash
+npm install swagger-jsdoc swagger-ui-express --save
+```
+
+4. Create a `.env` file in the root directory with the following variables:
 ```
 PORT=5000
 DATABASE_URL=your_database_connection_string
 JWT_SECRET=your_jwt_secret
 ```
 
-4. Run the application in development mode
+5. Run the application in development mode
 ```bash
 npm run dev
 ```
@@ -53,6 +58,16 @@ npm run dev
 ## Database Setup
 
 The application uses Sequelize ORM with PostgreSQL. It will automatically create the tables when it starts up. Make sure your database connection string is correctly set in the `.env` file.
+
+## API Documentation
+
+This API is documented using Swagger. After starting the application, you can access the Swagger UI at:
+
+```
+http://localhost:4000/api-docs
+```
+
+The Swagger UI provides a comprehensive interface to view and test all API endpoints, with request/response examples and schema definitions.
 
 ## API Endpoints
 
