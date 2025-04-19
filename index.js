@@ -1,4 +1,5 @@
 import express from 'express';
+import { setupSwagger } from './swagger.js';
 import sequelize from './config/database.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -42,9 +43,12 @@ app.use('/api', authRoutes);
 // Use user routes
 app.use('/api', userRoutes);
 
+// Setup Swagger Documentation
+setupSwagger(app);
+
 // Landing route
 app.get('/', (req, res) => {
-  res.send('Landing route working!');
+  res.send('Landing route working! Visit /api-docs for API documentation');
 });
 
 // Start server
