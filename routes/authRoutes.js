@@ -8,7 +8,67 @@ dotenv.config();
 
 const router = express.Router();
 
-// POST /api/login
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Authenticate a user
+ *     description: Login with email and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserLogin'
+ *     responses:
+ *       200:
+ *         description: Successfully authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: 550e8400-e29b-41d4-a716-446655440000
+ *                     email:
+ *                       type: string
+ *                       example: john.doe@example.com
+ *                     role:
+ *                       type: string
+ *                       example: student
+ *                     firstName:
+ *                       type: string
+ *                       example: John
+ *                     lastName:
+ *                       type: string
+ *                       example: Doe
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -22,7 +82,7 @@ router.post("/login", async (req, res) => {
     if (!isMatch)
       return res.status(401).json({ message: "Invalid credentials" });
 
-    // Sign JWT
+    // JWT Token Creation
     const token = jwt.sign(
       {
         id: user.id,
@@ -33,7 +93,7 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Return token and user info (excluding password)
+    // Send Response and Return token and user info (excluding password)
     res.json({
       token,
       user: {
@@ -45,12 +105,65 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ Login error:", err);
+    console.error(" Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 });
 
-// Register new user
+/**
+ * @swagger
+ * /api/register:
+ *   post:
+ *     summary: Register a new student
+ *     description: Create a new student account with the provided information
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserRegistration'
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User registered successfully
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                       example: 550e8400-e29b-41d4-a716-446655440000
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       example: john.doe@example.com
+ *                     registrationNumber:
+ *                       type: string
+ *                       example: REG-1234-2025
+ *                     role:
+ *                       type: string
+ *                       example: student
+ *       400:
+ *         description: Bad request (validation error or email already exists)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/register", async (req, res) => {
   const { firstName, lastName, email, password, dateOfBirth } = req.body;
 
@@ -96,7 +209,7 @@ router.post("/register", async (req, res) => {
       role: "student",
     });
 
-    // Return success
+    //  Send Registration Response
     res.status(201).json({
       message: "User registered successfully",
       user: {

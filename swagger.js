@@ -30,6 +30,20 @@ const options = {
         description: 'Development server'
       }
     ],
+    tags: [
+      {
+        name: 'Auth',
+        description: 'Authentication operations'
+      },
+      {
+        name: 'User',
+        description: 'User operations'
+      },
+      {
+        name: 'Admin',
+        description: 'Administration operations'
+      }
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {

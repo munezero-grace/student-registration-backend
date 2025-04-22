@@ -1,22 +1,16 @@
-import User from '../models/User.js';
-
-/**
- * Get the authenticated user's profile
- * @route GET /api/profile
- * @access Private - Requires JWT authentication
- */
+import User from "../models/User.js";
 export const getProfile = async (req, res) => {
   try {
     // The user is already attached to the request by the authenticateUser middleware
     const user = req.user;
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User profile not found.'
+        message: "User profile not found.",
       });
     }
-    
+
     // Return the user profile (without password)
     return res.status(200).json({
       success: true,
@@ -29,14 +23,14 @@ export const getProfile = async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         role: user.role,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
+        updatedAt: user.updatedAt,
+      },
     });
   } catch (error) {
-    console.error('❌ Error fetching user profile:', error);
+    console.error("❌ Error fetching user profile:", error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
