@@ -74,7 +74,7 @@ router.post("/login", async (req, res) => {
 
   try {
     // Check if user exists
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findByEmail(email);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // Compare passwords
@@ -174,7 +174,7 @@ router.post("/register", async (req, res) => {
     }
 
     // Check for existing user with the same email
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({
         message:
@@ -198,14 +198,14 @@ router.post("/register", async (req, res) => {
     const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4 digits
     const registrationNumber = `REG-${uniqueCode}-2025`;
 
-    // Create user
+    // Create user with Prisma
     const user = await User.create({
       firstName,
       lastName,
       email,
       password: hashedPassword,
       registrationNumber,
-      dateOfBirth,
+      dateOfBirth: new Date(dateOfBirth),
       role: "student",
     });
 

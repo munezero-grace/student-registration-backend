@@ -23,7 +23,7 @@ export const authenticateUser = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find the user in the database
-    const user = await User.findByPk(decoded.id);
+    const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(404).json({ 
         success: false, 
@@ -71,7 +71,7 @@ export const verifyAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Check if user exists and is admin
-    const user = await User.findByPk(decoded.id);
+    const user = await User.findById(decoded.id);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: "Access denied: Admins only" });
     }

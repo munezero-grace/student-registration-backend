@@ -1,7 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
 import { verifyAdmin } from "../middleware/authMiddleware.js";
-import { Op } from "sequelize";
 
 const router = express.Router();
 
@@ -98,6 +97,12 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+// GET /api/admin/users - Retrieves a list of all registered users with advanced options:
+// - Pagination: Controls how many users are shown at once (page & limit parameters)
+// - Searching: Filters users by name, email, or registration number
+// - Role filtering: Shows only admin or student users
+// - Sorting: Orders results by different fields (name, email, registration date)
+// - Accessible only to admin users
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
     // Extract query parameters
@@ -106,56 +111,20 @@ router.get("/users", verifyAdmin, async (req, res) => {
     const search = req.query.search || "";
     const role = req.query.role || "";
     const sortBy = req.query.sortBy || "createdAt";
-    const sortOrder = req.query.sortOrder === "asc" ? "ASC" : "DESC";
+    const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc";
 
-    // Calculate offset for pagination
-    const offset = (page - 1) * limit;
-
-    // Build filter conditions
-    const whereConditions = {};
-
-    // Add search filter
-    if (search) {
-      whereConditions[Op.or] = [
-        { firstName: { [Op.iLike]: `%${search}%` } },
-        { lastName: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } },
-        { registrationNumber: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-
-    // Add role filter
-    if (role) {
-      whereConditions.role = role;
-    }
-
-    // Build sort conditions - handle special case for name (which doesn't exist as a column)
-    const order = [];
-    if (sortBy === "name") {
-      order.push(["firstName", sortOrder], ["lastName", sortOrder]);
-    } else {
-      order.push([sortBy, sortOrder]);
-    }
-
-    // Execute the query with pagination and filters
-    const { count, rows } = await User.findAndCountAll({
-      where: whereConditions,
-      order: order,
-      limit: limit,
-      offset: offset,
-      attributes: { exclude: ["password"] }, // Exclude password from the response
+    // Use the User model's findAll method that implements Prisma pagination and filtering
+    const result = await User.findAll({
+      page,
+      limit,
+      search,
+      role,
+      sortBy,
+      sortOrder,
     });
 
     // Return paginated results with metadata
-    res.json({
-      data: rows,
-      pagination: {
-        total: count,
-        page: page,
-        limit: limit,
-        totalPages: Math.ceil(count / limit),
-      },
-    });
+    res.json(result);
   } catch (error) {
     console.error("❌ Error fetching users:", error);
     res.status(500).json({ message: "Server error while fetching users." });
@@ -211,17 +180,26 @@ router.get("/users", verifyAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+// GET /api/admin/users/:id - Fetches a single user's complete profile by their ID
+// - Returns all user details except for the password
+// - Useful for viewing complete information about a specific user before editing
+// - Returns a 404 error if the user doesn't exist
+// - Accessible only to admin users
 router.get("/users/:id", verifyAdmin, async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id, {
-      attributes: { exclude: ["password"] },
-    });
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(user);
+    // Remove password from response
+    const userWithoutPassword = {
+      ...user,
+      password: undefined,
+    };
+
+    res.json(userWithoutPassword);
   } catch (error) {
     console.error("❌ Error fetching user:", error);
     res.status(500).json({ message: "Error fetching user" });
@@ -281,6 +259,11 @@ router.get("/users/:id", verifyAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+// DELETE /api/admin/users/:id - Permanently removes a user from the system
+// - Checks if the user exists before attempting deletion
+// - Has a safety feature to prevent deleting the last admin in the system
+// - Returns success message after successful deletion
+// - Accessible only to admin users
 router.delete("/users/:id", verifyAdmin, async (req, res) => {
   try {
     // Validate user ID parameter
@@ -289,8 +272,8 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Check if user exists before deletion - use findByPk which is more efficient
-    const user = await User.findByPk(userId);
+    // Check if user exists before deletion
+    const user = await User.findById(userId);
     if (!user) {
       return res
         .status(404)
@@ -299,7 +282,7 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
 
     // Prevent deleting the last admin user
     if (user.role === "admin") {
-      const adminCount = await User.count({ where: { role: "admin" } });
+      const adminCount = await User.countByRole("admin");
       if (adminCount <= 1) {
         return res.status(403).json({
           message:
@@ -309,7 +292,7 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
     }
 
     // Proceed with deletion
-    await user.destroy();
+    await User.delete(userId);
     res.json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("❌ Error deleting user:", error);
@@ -384,19 +367,26 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+// PUT /api/admin/users/:id - Updates a user's information in the system
+// - Can update firstName, lastName, email, dateOfBirth, and role
+// - Validates that email addresses aren't already used by another user
+// - Has a safety feature to prevent changing the last admin to a student role
+// - Returns the updated user information after successful update
+// - Accessible only to admin users
 router.put("/users/:id", verifyAdmin, async (req, res) => {
   try {
     const { firstName, lastName, email, dateOfBirth, role } = req.body;
+    const userId = req.params.id;
 
-    // Find the user - use findByPk for better performance
-    const user = await User.findByPk(req.params.id);
+    // Find the user
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Prevent changing the role of the last admin
     if (user.role === "admin" && role === "student") {
-      const adminCount = await User.count({ where: { role: "admin" } });
+      const adminCount = await User.countByRole("admin");
       if (adminCount <= 1) {
         return res.status(403).json({
           message:
@@ -405,37 +395,34 @@ router.put("/users/:id", verifyAdmin, async (req, res) => {
       }
     }
 
-    // Update fields
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (email) {
-      // Check if email is already in use by another user
-      const existingUser = await User.findOne({
-        where: {
-          email,
-          id: { [Op.ne]: req.params.id },
-        },
-      });
-
-      if (existingUser) {
+    // Prepare update data
+    const updateData = {};
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
+    if (role) updateData.role = role;
+    
+    // Check email uniqueness if it's being updated
+    if (email && email !== user.email) {
+      const existingUser = await User.findByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
         return res.status(400).json({ message: "Email is already in use" });
       }
-
-      user.email = email;
+      updateData.email = email;
     }
-    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
-    if (role) user.role = role;
 
-    // Save changes
-    await user.save();
+    // Update the user
+    const updatedUser = await User.update(userId, updateData);
 
-    // Return updated user (without password)
-    const updatedUser = user.toJSON();
-    delete updatedUser.password;
+    // Remove password from response
+    const userWithoutPassword = {
+      ...updatedUser,
+      password: undefined
+    };
 
     res.json({
       message: "User updated successfully",
-      user: updatedUser,
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error("❌ Error updating user:", error);

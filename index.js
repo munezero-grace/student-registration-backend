@@ -1,19 +1,22 @@
 import express from 'express';
 import { setupSwagger } from './swagger.js';
-import sequelize from './config/database.js';
+import prisma from './prisma/client.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import cors from 'cors';
+import dotenv from 'dotenv';
 
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Sync DB
-sequelize.sync({ alter: true })
-  .then(() => console.log("✅ DB synced with Neon"))
-  .catch((err) => console.error("❌ DB connection failed:", err));
+// Test Prisma connection
+prisma.$connect()
+  .then(() => console.log("✅ Connected to PostgreSQL with Prisma"))
+  .catch((err) => console.error("❌ Prisma connection failed:", err));
 
 // Middleware
 const corsOpts = {
@@ -52,6 +55,25 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Closing Prisma connection and shutting down server...');
+  await prisma.$disconnect();
+  server.close(() => {
+    console.log('Server shut down successfully');
+    process.exit(0);
+  });
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Closing Prisma connection and shutting down server...');
+  await prisma.$disconnect();
+  server.close(() => {
+    console.log('Server shut down successfully');
+    process.exit(0);
+  });
 });

@@ -1,46 +1,112 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
+import prisma from '../prisma/client.js';
 
-const User = sequelize.define("User", {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+// User model functions using Prisma
+const User = {
+  // Find a user by ID
+  findById: async (id) => {
+    return await prisma.user.findUnique({
+      where: { id }
+    });
   },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false,
+  
+  // Find a user by email
+  findByEmail: async (email) => {
+    return await prisma.user.findUnique({
+      where: { email }
+    });
   },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false,
+  
+  // Find a user by registration number
+  findByRegistrationNumber: async (registrationNumber) => {
+    return await prisma.user.findUnique({
+      where: { registrationNumber }
+    });
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
+  
+  // Create a new user
+  create: async (userData) => {
+    return await prisma.user.create({
+      data: userData
+    });
   },
-  password: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+  
+  // Update a user
+  update: async (id, userData) => {
+    return await prisma.user.update({
+      where: { id },
+      data: userData
+    });
   },
-  registrationNumber: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
+  
+  // Delete a user
+  delete: async (id) => {
+    return await prisma.user.delete({
+      where: { id }
+    });
   },
-  dateOfBirth: {
-    type: DataTypes.DATE,
-    allowNull: false,
+  
+  // Find all users with pagination, sorting, and filtering
+  findAll: async ({ page = 1, limit = 10, search = '', role = '', sortBy = 'createdAt', sortOrder = 'desc' }) => {
+    const skip = (page - 1) * limit;
+    const take = parseInt(limit);
+    
+    // Build the where condition for filtering
+    const where = {};
+    
+    // Add search filter
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { registrationNumber: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    // Add role filter
+    if (role) {
+      where.role = role;
+    }
+    
+    // Build the orderBy object for sorting
+    let orderBy = {};
+    if (sortBy === 'name') {
+      orderBy = [
+        { firstName: sortOrder },
+        { lastName: sortOrder }
+      ];
+    } else {
+      orderBy = { [sortBy]: sortOrder };
+    }
+    
+    // Execute the query
+    const [users, count] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy,
+        skip,
+        take
+      }),
+      prisma.user.count({ where })
+    ]);
+    
+    return {
+      data: users,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: take,
+        totalPages: Math.ceil(count / take)
+      }
+    };
   },
-  role: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-}, {
-  tableName: "Users",
-  timestamps: true,
-  underscored: false
-});
+  
+  // Count users by role
+  countByRole: async (role) => {
+    return await prisma.user.count({
+      where: { role }
+    });
+  }
+};
 
 export default User;
