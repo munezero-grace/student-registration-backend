@@ -15,7 +15,8 @@ model User {
   firstName         String
   lastName          String
   email             String   @unique
-  password          String
+  profilePicture   String?
+  password          String?
   registrationNumber String   @unique
   dateOfBirth       DateTime
   role              String   @default("student")
@@ -23,4 +24,14 @@ model User {
   updatedAt         DateTime @updatedAt
 
   @@map("users")
+}
+
+model GoogleUser {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  firstName     String
+  lastName      String
+  profilePicture String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

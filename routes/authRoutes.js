@@ -225,4 +225,70 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/google-signin:
+ *   post:
+ *     summary: Sign in a user using Google
+ *     description: Authenticate a user via Google OAuth
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               picture:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User signed in successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Server error
+ */
+
+// endpoint to handle Google sign-in
+router.post("/google-signin", async (req, res) => {
+  const { email, firstName, lastName, picture } = req.body;
+
+  try {
+    // Check if the user already exists
+    let user = await User.findByEmail(email);
+
+    if (!user) {
+      // Generate unique registration number (REG-XXXX-2025)
+      const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4 digits
+      const registrationNumber = `REG-${uniqueCode}-2025`;
+
+      // Create a new user for Google sign-in using createGoogleUser
+      user = await User.createGoogleUser({
+        email,
+        firstName,
+        lastName,
+        picture,
+        registrationNumber,
+      });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(200).json({ token, user });
+  } catch (error) {
+    console.error("Error during Google sign-in:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 export default router;
